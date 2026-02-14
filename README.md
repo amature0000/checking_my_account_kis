@@ -17,7 +17,7 @@ root/
 ```bash
 pip install -r requirements.txt
 ```
-3. main 코드 실행
+2. main 코드 실행
 ```
 python make.py
 ```
