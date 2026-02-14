@@ -1,64 +1,69 @@
-from pykis import PyKis, KisAuth, KisBalance
+from pykis import PyKis, KisAuth
 from datetime import datetime
+import os
 import matplotlib.pyplot as plt
 plt.rcParams['font.family'] ='Malgun Gothic'
 plt.rcParams['axes.unicode_minus'] =False
 
-# 실전투자용 PyKis 객체를 생성합니다.
-kis1 = PyKis(KisAuth.load("private/secret.json"), keep_token=True)
-kis2 = PyKis(KisAuth.load("private/secret2.json"), keep_token=True)
 
-# 주 계좌 객체를 가져옵니다.
-account1 = kis1.account()
-account2 = kis2.account()
+private_dir = "./private"
+json_files = []
 
-balance1: KisBalance = account1.balance()
-balance2: KisBalance = account2.balance()
+for filename in os.listdir(private_dir):
+    if filename.endswith('.json'):
+        file_path = os.path.join(private_dir, filename)
+        json_files.append(file_path)
 
-print(repr(balance1)) # repr을 통해 객체의 주요 내용을 확인할 수 있습니다.
-print(repr(balance2)) # repr을 통해 객체의 주요 내용을 확인할 수 있습니다.
+balance_dict = {}
+
+for file_path in json_files:
+    file_name = os.path.basename(file_path)
+    
+    try:
+        # 실전투자용 PyKis 객체를 생성합니다.
+        kis = PyKis(KisAuth.load(file_path), keep_token=True)
+        # 주 계좌 객체를 가져옵니다.
+        balance = kis.account().balance()
+        
+        balance_dict[file_name] = balance
+        print(f"- {file_name} 로드 완료")
+        print(repr(balance))
+    except Exception as e:
+        print(f"- {file_name} 로드 실패")
+
 # ================================================
-# secret1: 해외주식 전용
-# secret2: ISA계좌
-# 환율 설정
-usd_krw = balance1.deposits['USD'].exchange_rate
+def extract_assets(balance, symbols_list, invested_list, current_list, account_name="계좌"):
+    """
+    계좌 잔고 객체에서 주식과 현금 데이터를 추출하여 리스트에 추가합니다.
+    """
+    # 환율 설정(default 1)
+    usd_krw = 1
+    if 'USD' in balance.deposits:
+        usd_krw = balance.deposits['USD'].exchange_rate
 
-symbols = []
-invested_krw = []
-current_krw = []
+    # 주식 데이터 추출
+    for stock in balance.stocks:
+        
+        # 금액 계산
+        is_foreign = hasattr(stock, 'market') and stock.market in ['NASDAQ', 'NYSE', 'AMEX']
+        multiplier = usd_krw if is_foreign else 1
+        # 종목명 가져오기(미국주식의 경우 symbol, 아니면 name)
+        name = getattr(stock, 'symbol', stock.name) if is_foreign else stock.name
+        display_name = f"{name} ({int(stock.qty)}주)"
+        
+        symbols_list.append(display_name)
+        invested_list.append((stock.amount - stock.profit) * multiplier)
+        current_list.append(stock.amount * multiplier)
 
-# 계좌1 주식
-for stock in balance1.stocks:
-    symbols.append(stock.symbol)
-    invested_krw.append((stock.amount - stock.profit) * usd_krw)
-    current_krw.append(stock.amount * usd_krw)
-
-# 계좌 1 현금
-for curr in ['KRW', 'USD']:
-    c_amount = balance1.deposits[curr].amount
-    if c_amount > 0:
-        c_krw = c_amount * (usd_krw if curr == 'USD' else 1)
-        symbols.append(f"계좌1 {curr}")
-        invested_krw.append(c_krw)
-        current_krw.append(c_krw)
-
-# 계좌2 주식
-for stock in balance2.stocks:
-    name = getattr(stock, 'name', stock.symbol)
-    symbols.append(name)
-    invested_krw.append(stock.amount - stock.profit)
-    current_krw.append(stock.amount)
-
-# 계좌 2 현금
-c2_krw = balance2.deposits['KRW'].amount
-if c2_krw > 0:
-    symbols.append("계좌2 KRW")
-    invested_krw.append(c2_krw)
-    current_krw.append(c2_krw)
-
-# 시각화
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(22, 11))
-plt.rc('font', family='Malgun Gothic') 
+    # 현금 자본 추출
+    for curr, deposit in balance.deposits.items():
+        if deposit.amount > 0:
+            multiplier = usd_krw if curr == 'USD' else 1
+            c_krw = deposit.amount * multiplier
+            
+            symbols_list.append(f"{account_name} {curr}")
+            invested_list.append(c_krw)
+            current_list.append(c_krw)
 
 def draw_detailed_pie(ax, data, title, total_label):
     # 금액이 있는 항목만
@@ -82,12 +87,25 @@ def draw_detailed_pie(ax, data, title, total_label):
             fontweight='bold', fontsize=14)
     ax.set_title(title, fontsize=20, pad=40)
 
+
+symbols = []
+invested_krw = []
+current_krw = []
+
+# 계좌 정보 추출
+for account_name, bal in balance_dict.items():
+    account_name = account_name.split('.')[0]
+    extract_assets(bal, symbols, invested_krw, current_krw, account_name)
+
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(22, 11))
+plt.rc('font', family='Malgun Gothic') 
+
 # 차트 그리기
 draw_detailed_pie(ax1, invested_krw, "전체 포트폴리오 투자 원금", "총 투자금")
 draw_detailed_pie(ax2, current_krw, "전체 포트폴리오 자산 가치", f"총 평가액({(sum(current_krw) - sum(invested_krw))/sum(invested_krw)*100:.2f}%)")
 
-
-
+# 차트 저장
 plt.tight_layout()
 today = datetime.now().strftime("%Y%m%d_%H%M%S")
 filename = f"portfolio_analysis_{today}.png"
