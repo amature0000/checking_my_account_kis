@@ -1,4 +1,4 @@
-# exploit python-kis
+# description
 python-kis 패키지를 활용해 한국투자증권의 내 계좌(들)의 투자금/현재 가치를 원형 그래프로 시각화합니다.
 
 # required directory structure
