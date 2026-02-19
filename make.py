@@ -16,23 +16,22 @@ for filename in os.listdir(private_dir):
 
 balance_dict = {}
 
+def try_catch_balance(file_name):
+    try: return PyKis(KisAuth.load(file_path), keep_token=True).account().balance()
+    except Exception as e:
+        print(f"- {file_name} 로드 실패: {e}")
+        return try_catch_balance(file_name)
+
 for file_path in json_files:
     file_name = os.path.basename(file_path)
-    
-    try:
-        # 실전투자용 PyKis 객체를 생성합니다.
-        kis = PyKis(KisAuth.load(file_path), keep_token=True)
-        # 주 계좌 객체를 가져옵니다.
-        balance = kis.account().balance()
-        
-        balance_dict[file_name] = balance
-        print(f"- {file_name} 로드 완료")
-        print(repr(balance))
-    except Exception as e:
-        print(f"- {file_name} 로드 실패")
+    balance = try_catch_balance(file_name)
+    balance_dict[file_name] = balance
+
+    print(f"- {file_name} 로드 완료")
+    print(repr(balance))
 
 # ================================================
-def extract_assets(balance, symbols_list, invested_list, current_list, account_name="계좌"):
+def extract_assets(balance, symbols_list, invested_list, current_list, symbols_money_list, current_money_list, account_name="계좌"):
     """
     계좌 잔고 객체에서 주식과 현금 데이터를 추출하여 리스트에 추가합니다.
     """
@@ -61,9 +60,8 @@ def extract_assets(balance, symbols_list, invested_list, current_list, account_n
             multiplier = usd_krw if curr == 'USD' else 1
             c_krw = deposit.amount * multiplier
             
-            symbols_list.append(f"{account_name} {curr}")
-            invested_list.append(c_krw)
-            current_list.append(c_krw)
+            symbols_money_list.append(f"{account_name} {curr}")
+            current_money_list.append(c_krw)
 
 def draw_detailed_pie(ax, data, title, total_label):
     # 금액이 있는 항목만
@@ -91,22 +89,27 @@ def draw_detailed_pie(ax, data, title, total_label):
 symbols = []
 invested_krw = []
 current_krw = []
+symbols_money = []
+current_money = []
 
 # 계좌 정보 추출
 for account_name, bal in balance_dict.items():
     account_name = account_name.split('.')[0]
-    extract_assets(bal, symbols, invested_krw, current_krw, account_name)
+    extract_assets(bal, symbols, invested_krw, current_krw, symbols_money, current_money, account_name)
 
 
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(22, 11))
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(22, 12))
 plt.rc('font', family='Malgun Gothic') 
 
 # 차트 그리기
 draw_detailed_pie(ax1, invested_krw, "전체 포트폴리오 투자 원금", "총 투자금")
 draw_detailed_pie(ax2, current_krw, "전체 포트폴리오 자산 가치", f"총 평가액({(sum(current_krw) - sum(invested_krw))/sum(invested_krw)*100:.2f}%)")
 
-# 차트 저장
-plt.tight_layout()
+# 현금 정보
+cash_details = "\n".join([f"{name}: {int(val):,}원" for name, val in zip(symbols_money, current_money)])
+plt.figtext(0.5, 0.05, cash_details, ha='left', fontsize=15,  bbox=dict(facecolor='white', alpha=0.5, edgecolor='gray', boxstyle='round,pad=1'))
+plt.tight_layout(rect=[0, 0.1, 1, 1]) 
+
 today = datetime.now().strftime("%Y%m%d_%H%M%S")
 filename = f"portfolio_analysis_{today}.png"
 plt.savefig(filename, dpi=300, bbox_inches='tight')
