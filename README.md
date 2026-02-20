@@ -21,3 +21,5 @@ pip install -r requirements.txt
 ```
 python make.py
 ```
+# Note
+미국 주식 계좌에 USD 현금이 들어 있어야 정상작동함
