@@ -1,0 +1,123 @@
+import os
+import json
+import copy
+import requests
+import yaml
+from datetime import datetime
+
+class KISAuth:
+    def __init__(self, key_path: str):
+        """
+        key_path: json 파일 경로
+        """
+        # 토큰 저장 경로
+        self.config_root = os.path.join(os.path.expanduser("~"), "KIS", "config")
+        if not os.path.exists(self.config_root):
+            os.makedirs(self.config_root)
+
+        self.token_file = os.path.join(self.config_root, f"KIS_TOKEN_{datetime.today().strftime('%Y%m%d')}")
+        
+        # 설정 로드
+        self.cfg = self._load_key(key_path)
+
+        # 상태 변수
+        self.base_url = "https://openapi.koreainvestment.com:9443"
+        self.last_auth_time = datetime.now()
+        
+        # 헤더 초기화
+        self.headers = {
+            "Content-Type": "application/json",
+            "Accept": "text/plain",
+            "charset": "UTF-8",
+            "User-Agent": "Mozilla/5.0"
+        }
+
+        # 인증 실행 (토큰 발급 및 환경 설정)
+        self._authenticate()
+
+    def _load_key(self, path: str) -> dict:
+        with open(path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+
+    def _save_token(self, token: str, expired: str):
+        valid_date = datetime.strptime(expired, "%Y-%m-%d %H:%M:%S")
+        with open(self.token_file, "w", encoding="utf-8") as f:
+            data = {"token": token, "valid-date": valid_date.strftime("%Y-%m-%d %H:%M:%S")}
+            yaml.dump(data, f)
+
+    def _read_token(self):
+        try:
+            if not os.path.exists(self.token_file):
+                return None
+            
+            with open(self.token_file, "r", encoding="UTF-8") as f:
+                tkg_tmp = yaml.load(f, Loader=yaml.FullLoader)
+
+            exp_dt = tkg_tmp["valid-date"]
+            now_dt = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
+
+            if exp_dt > now_dt:
+                return tkg_tmp["token"]
+            return None
+        except Exception:
+            return None
+
+    def _authenticate(self):
+        """토큰 조회 및 발급, 헤더 업데이트"""
+        ak1, ak2 = "appkey", "secretkey"
+        p = {
+            "grant_type": "client_credentials",
+            "appkey": self.cfg[ak1],
+            "appsecret": self.cfg[ak2]
+        }
+
+        saved_token = self._read_token()
+        if saved_token is None:
+            url = f"{self.base_url}/oauth2/tokenP"
+            res = requests.post(url, data=json.dumps(p), headers=self.headers)
+            
+            if res.status_code == 200:
+                res_data = res.json()
+                my_token = res_data["access_token"]
+                my_expired = res_data["access_token_token_expired"]
+                self._save_token(my_token, my_expired)
+            else:
+                raise ConnectionError(f"Auth Fail: {res.text}")
+        else:
+            my_token = saved_token
+
+        # 헤더 업데이트
+        self.headers.update({
+            "authorization": f"Bearer {my_token}",
+            "appkey": self.cfg[ak1],
+            "appsecret": self.cfg[ak2]
+        })
+        self.last_auth_time = datetime.now()
+
+    def _get_headers(self):
+        """토큰 유효시간을 체크하고 헤더 반환"""
+        n2 = datetime.now()
+        if (n2 - self.last_auth_time).seconds >= 86400:
+            self._authenticate()
+        return copy.deepcopy(self.headers)
+
+    def fetch(self, api_url: str, tr_id: str, params: dict, post_flag: bool = False) -> dict:
+        """API 호출 인터페이스"""
+        url = f"{self.base_url}{api_url}"
+        headers = self._get_headers()
+        
+        actual_tr_id = tr_id
+        if tr_id.startswith(('T', 'J', 'C')):
+            actual_tr_id = 'V' + tr_id[1:]
+            
+        headers.update({
+            "tr_id": actual_tr_id,
+            "custtype": "P"
+        })
+
+        if post_flag:
+            res = requests.post(url, headers=headers, data=json.dumps(params))
+        else:
+            res = requests.get(url, headers=headers, params=params)
+
+        return res.json()
