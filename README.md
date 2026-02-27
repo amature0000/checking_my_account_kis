@@ -12,8 +12,9 @@ root/
   └── requirements.txt      # 요구 패키지
 ```
 # required .json structure
-- appkey
-- secretkey
+- appkey: 발급받은 키
+- secretkey: 발급받은 키
+- account: 계좌번호
 
 # how to run
 1. 요구 패키지 설치
