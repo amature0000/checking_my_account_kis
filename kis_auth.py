@@ -10,16 +10,20 @@ class KISAuth:
         """
         key_path: json 파일 경로
         """
+        # 설정 로드
+        self.cfg = self._load_key(key_path)
+
+        account = self.cfg['account'].split("-")
+        self.__cano = account[0]
+        self.__acnt_prdt_cd = account[1]
+
         # 토큰 저장 경로
         self.config_root = os.path.join(os.path.expanduser("~"), "KIS", "config")
         if not os.path.exists(self.config_root):
             os.makedirs(self.config_root)
 
-        self.token_file = os.path.join(self.config_root, f"KIS_TOKEN_{datetime.today().strftime('%Y%m%d')}")
+        self.token_file = os.path.join(self.config_root, f"KIS_TOKEN_{self.__cano}_{datetime.today().strftime('%Y%m%d')}")
         
-        # 설정 로드
-        self.cfg = self._load_key(key_path)
-
         # 상태 변수
         self.base_url = "https://openapi.koreainvestment.com:9443"
         self.last_auth_time = datetime.now()
@@ -34,6 +38,14 @@ class KISAuth:
 
         # 인증 실행 (토큰 발급 및 환경 설정)
         self._authenticate()
+    
+    @property
+    def cano(self):
+        return self.__cano
+    
+    @property
+    def acnt_prdt_cd(self):
+        return self.__acnt_prdt_cd
 
     def _load_key(self, path: str) -> dict:
         with open(path, 'r', encoding='utf-8') as f:
@@ -97,31 +109,10 @@ class KISAuth:
         })
         self.last_auth_time = datetime.now()
 
-    def _get_headers(self):
+    def get_headers(self):
         """토큰 유효시간을 체크하고 헤더 반환"""
         n2 = datetime.now()
         if (n2 - self.last_auth_time).seconds >= 86400:
             print("[KISAuth] 유효시간 만료. 헤더 업데이트")
             self._authenticate()
         return copy.deepcopy(self.headers)
-
-    def fetch(self, api_url: str, tr_id: str, params: dict, post_flag: bool = False) -> dict:
-        """API 호출 인터페이스"""
-        url = f"{self.base_url}{api_url}"
-        headers = self._get_headers()
-        
-        actual_tr_id = tr_id
-        if tr_id.startswith(('T', 'J', 'C')):
-            actual_tr_id = 'V' + tr_id[1:]
-            
-        headers.update({
-            "tr_id": actual_tr_id,
-            "custtype": "P"
-        })
-
-        if post_flag:
-            res = requests.post(url, headers=headers, data=json.dumps(params))
-        else:
-            res = requests.get(url, headers=headers, params=params)
-
-        return res.json()
