@@ -1,3 +1,6 @@
+# Working In Progress
+현재 정상적으로 기능하지 않을 수 있음
+
 # description
 한국투자증권의 내 계좌(들)의 투자금/현재 가치를 원형 그래프로 시각화합니다.
 
@@ -12,8 +15,8 @@ root/
   └── requirements.txt      # 요구 패키지
 ```
 # required .json structure
-- appkey: 발급받은 키
-- secretkey: 발급받은 키
+- appkey: 발급받은 app key
+- secretkey: 발급받은 secret key
 - account: 계좌번호
 
 # how to run
@@ -26,6 +29,6 @@ pip install -r requirements.txt
 python make.py
 ```
 
-# related work
+# note
 - lib/ 코드들은 kis 공식 샘플코드를 참고했습니다. [바로가기](https://github.com/koreainvestment/open-trading-api)
-- 보다 범용적이고 신뢰성 높은 python-kis 라이브러리를 사용하십시오. [바로가기](https://github.com/Soju06/python-kis)
+- lib/ 코드들은 공식 라이브러리가 아니며, 개인 라이브러리입니다.
