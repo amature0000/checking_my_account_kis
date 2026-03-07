@@ -10,6 +10,7 @@ class KISStock:
         self.auth = kis_auth
 
     def get_domestic(self):
+        print("[KISStock] 데이터 수신(국내)")
         return self._fetch_balance(
             is_overseas=False,
             api_url="/uapi/domestic-stock/v1/trading/inquire-balance",
@@ -29,6 +30,7 @@ class KISStock:
 
     def get_overseas(self, currency: str = "USD"):
         today = datetime.datetime.now().strftime("%Y%m%d")
+        print("[KISStock] 데이터 수신(해외)")
         
         return self._fetch_balance(
             is_overseas=True,
