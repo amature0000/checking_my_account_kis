@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 from datetime import datetime
+import os
 
 plt.rcParams["font.family"] = "Malgun Gothic"
 plt.rcParams["axes.unicode_minus"] = False
@@ -106,5 +107,12 @@ def draw_portfolio(stock, balance):
     
     today = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"portfolio_analysis_{today}.png"
-    plt.savefig(filename, dpi=300, bbox_inches='tight')
+
+    
+    # 토큰 저장 경로
+    save_root = "IMG/"
+    if not os.path.exists(save_root):
+        os.makedirs(save_root)
+
+    plt.savefig(save_root + filename, dpi=300, bbox_inches='tight')
     plt.show()
