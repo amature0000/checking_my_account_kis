@@ -1,3 +1,4 @@
 python-kis
 matplotlib
 pyyaml
+requests

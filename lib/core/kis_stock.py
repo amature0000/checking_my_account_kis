@@ -1,10 +1,11 @@
 import pandas as pd
 import time
-from kis_auth import KISAuth
 import requests
 import json
 import datetime
-from logger.Logger import Logger
+
+from lib.logger.logger import Logger
+from lib.core.kis_auth import KISAuth
 
 @Logger.apply_to_all_methods(Logger.printstack)
 class KISStock:
@@ -58,20 +59,21 @@ class KISStock:
                 "BASS_DT": today
             }
         )
-        if data.empty: return None
+        if data.empty: return None, 1
 
-        result = data[["prdt_name", "cblc_qty13", "frcr_pchs_amt", "frcr_evlu_amt2"]].copy()
+        # NOTE: 이름은 prdt_name인데 길어서 pdno로 바꿈
+        result = data[["pdno", "cblc_qty13", "frcr_pchs_amt", "frcr_evlu_amt2"]].copy()
         result.columns = ['name', 'qty', 'invested', 'current']
 
         result["qty"] = pd.to_numeric(result["qty"])
         result["invested"] = pd.to_numeric(result["invested"])
         result["current"] = pd.to_numeric(result["current"])
 
-        data['bass_exrt'] = pd.to_numeric(data['bass_exrt'])
-        result['invested'] *= data['bass_exrt']
-        result['current'] *= data['bass_exrt']
+        exchange_rate = pd.to_numeric(data['bass_exrt']).iloc[0]
+        result['invested'] *= exchange_rate
+        result['current'] *= exchange_rate
         
-        return result
+        return result, exchange_rate
 
     def fetch(self, api_url: str, tr_id: str, params: dict, post_flag: bool = False, tr_cont: str = ""):
         url = f"{self.auth.base_url}{api_url}"

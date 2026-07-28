@@ -4,15 +4,17 @@ import copy
 import requests
 import yaml
 from datetime import datetime
-from logger.Logger import Logger
+
+from lib.logger.logger import Logger
 
 @Logger.apply_to_all_methods(Logger.printstack)
 class KISAuth:
-    def __init__(self, key_path: str):
+    def __init__(self, key_path: str, base_path: str):
         """
         key_path: json 파일 경로
         """
         # 설정 로드
+        self.name = os.path.basename(key_path)
         self.cfg = self._load_key(key_path)
 
         account = self.cfg['account'].split("-")
@@ -20,7 +22,7 @@ class KISAuth:
         self.__acnt_prdt_cd = account[1]
 
         # 토큰 저장 경로
-        self.config_root = os.path.join(os.path.expanduser("~"), "KIS", "config")
+        self.config_root = os.path.join(base_path, "TOKEN")
         if not os.path.exists(self.config_root):
             os.makedirs(self.config_root)
 
@@ -50,6 +52,7 @@ class KISAuth:
         return self.__acnt_prdt_cd
 
     def _load_key(self, path: str) -> dict:
+        Logger.log(f"대상: {self.name}")
         with open(path, 'r', encoding='utf-8') as f:
             return json.load(f)
 

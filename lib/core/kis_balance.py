@@ -1,7 +1,8 @@
 import requests
-from kis_auth import KISAuth
 import json
-from logger.Logger import Logger
+
+from lib.logger.logger import Logger
+from lib.core.kis_auth import KISAuth
 
 @Logger.apply_to_all_methods(Logger.printstack)
 class KISBalance:
