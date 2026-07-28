@@ -11,8 +11,9 @@ class KISStock:
     def __init__(self, kis_auth: KISAuth):
         self.auth = kis_auth
 
+    # NOTE: 종목명 prdt_name, 보유수량 hldg_qty, 투자원금 pchs_amt, 평가금액 evlu_amt
     def get_domestic(self):
-        return self._fetch_balance(
+        data = self._fetch_balance(
             is_overseas=False,
             api_url="/uapi/domestic-stock/v1/trading/inquire-balance",
             tr_id="TTTC8434R",
@@ -28,12 +29,22 @@ class KISStock:
                 "PRCS_DVSN": "00"
             }
         )
+        if data.empty: return None
+
+        result = data[["prdt_name", "hldg_qty", "pchs_amt", "evlu_amt"]].copy()
+        result.columns = ['name', 'qty', 'invested', 'current']
+
+        result["qty"] = pd.to_numeric(result["qty"])
+        result["invested"] = pd.to_numeric(result["invested"])
+        result["current"] = pd.to_numeric(result["current"])
+        
+        return result
 
     def get_overseas(self, currency: str = "USD"):
         today = datetime.datetime.now().strftime("%Y%m%d")
         Logger.log(f"통화: {currency}, 기준일: {today}")
         
-        return self._fetch_balance(
+        data = self._fetch_balance(
             is_overseas=True,
             api_url="/uapi/overseas-stock/v1/trading/inquire-present-balance",
             tr_id="CTRP6010R",
@@ -47,6 +58,20 @@ class KISStock:
                 "BASS_DT": today
             }
         )
+        if data.empty: return None
+
+        result = data[["prdt_name", "cblc_qty13", "frcr_pchs_amt", "frcr_evlu_amt2"]].copy()
+        result.columns = ['name', 'qty', 'invested', 'current']
+
+        result["qty"] = pd.to_numeric(result["qty"])
+        result["invested"] = pd.to_numeric(result["invested"])
+        result["current"] = pd.to_numeric(result["current"])
+
+        data['bass_exrt'] = pd.to_numeric(data['bass_exrt'])
+        result['invested'] *= data['bass_exrt']
+        result['current'] *= data['bass_exrt']
+        
+        return result
 
     def fetch(self, api_url: str, tr_id: str, params: dict, post_flag: bool = False, tr_cont: str = ""):
         url = f"{self.auth.base_url}{api_url}"
