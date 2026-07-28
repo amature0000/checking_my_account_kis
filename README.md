@@ -32,4 +32,5 @@ python make.py
 
 # note
 - lib/ 코드들은 kis 공식 샘플코드를 참고했습니다. [바로가기](https://github.com/koreainvestment/open-trading-api)
-- lib/ 코드들은 공식 라이브러리가 아니며, 개인 라이브러리입니다.
+- lib/ 코드들은 공식 라이브러리가 아닙니다.
+- Logger 클래스의 동기화 문제로 인해 싱글 스레드 환경만을 지원합니다.

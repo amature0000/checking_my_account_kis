@@ -5,13 +5,14 @@ class Logger:
     func_name = None
 
     @staticmethod
-    def printstack(func):
+    def printstack(func, should_print):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             instance = args[0] if args else None
             Logger.class_name = instance.__class__.__name__ if hasattr(instance, "__class__") else func.__module__
             Logger.func_name = func.__name__
-            print(f"[{Logger.class_name}] called {Logger.func_name}")
+            if should_print:
+                print(f"[{Logger.class_name}] called {Logger.func_name}")
             return func(*args, **kwargs)
         return wrapper
 
@@ -19,14 +20,16 @@ class Logger:
     def apply_to_all_methods(decorator):
         def decorate(cls):
             for name, attr in cls.__dict__.items():
-                if name.startswith("_"):
+                if name.startswith("__"):
                     continue
+
+                should_print = not name.startswith("_")
                 if isinstance(attr, staticmethod):
-                    setattr(cls, name, staticmethod(decorator(attr.__func__)))
+                    setattr(cls, name, staticmethod(decorator(attr.__func__, should_print=should_print)))
                 elif isinstance(attr, classmethod):
-                    setattr(cls, name, classmethod(decorator(attr.__func__)))
+                    setattr(cls, name, classmethod(decorator(attr.__func__, should_print=should_print)))
                 elif callable(attr):
-                    setattr(cls, name, decorator(attr))
+                    setattr(cls, name, decorator(attr, should_print=should_print))
             return cls
         return decorate
     
