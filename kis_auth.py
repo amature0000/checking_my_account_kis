@@ -4,7 +4,9 @@ import copy
 import requests
 import yaml
 from datetime import datetime
+from logger.Logger import Logger
 
+@Logger.apply_to_all_methods(Logger.printstack)
 class KISAuth:
     def __init__(self, key_path: str):
         """
@@ -52,7 +54,7 @@ class KISAuth:
             return json.load(f)
 
     def _save_token(self, token: str, expired: str):
-        print("[KISAuth] 인증토큰 저장")
+        Logger.log(f"토큰 저장, 만료일: {expired}")
         valid_date = datetime.strptime(expired, "%Y-%m-%d %H:%M:%S")
         with open(self.token_file, "w", encoding="utf-8") as f:
             data = {"token": token, "valid-date": valid_date.strftime("%Y-%m-%d %H:%M:%S")}
@@ -70,7 +72,7 @@ class KISAuth:
             now_dt = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
 
             if exp_dt > now_dt:
-                print("[KISAuth] 유효한 인증토큰 존재. 해당 토큰 반환")
+                Logger.log(f"유효 토큰 확인, 만료일: {exp_dt}")
                 return tkg_tmp["token"]
             return None
         except Exception:
@@ -87,7 +89,7 @@ class KISAuth:
 
         saved_token = self._read_token()
         if saved_token is None:
-            print("[KISAuth] 유효한 인증토큰 없음. 발급 절차 진행")
+            Logger.log("유효한 인증토큰 없음. 발급 절차 진행")
             url = f"{self.base_url}/oauth2/tokenP"
             res = requests.post(url, data=json.dumps(p), headers=self.headers)
             
@@ -113,6 +115,6 @@ class KISAuth:
         """토큰 유효시간을 체크하고 헤더 반환"""
         n2 = datetime.now()
         if (n2 - self.last_auth_time).seconds >= 86400:
-            print("[KISAuth] 유효시간 만료. 헤더 업데이트")
+            Logger.log("토큰 유효시간 만료. 헤더 업데이트")
             self._authenticate()
         return copy.deepcopy(self.headers)

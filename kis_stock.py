@@ -4,13 +4,14 @@ from kis_auth import KISAuth
 import requests
 import json
 import datetime
+from logger.Logger import Logger
 
+@Logger.apply_to_all_methods(Logger.printstack)
 class KISStock:
     def __init__(self, kis_auth: KISAuth):
         self.auth = kis_auth
 
     def get_domestic(self):
-        print("[KISStock] 데이터 수신(국내)")
         return self._fetch_balance(
             is_overseas=False,
             api_url="/uapi/domestic-stock/v1/trading/inquire-balance",
@@ -30,7 +31,7 @@ class KISStock:
 
     def get_overseas(self, currency: str = "USD"):
         today = datetime.datetime.now().strftime("%Y%m%d")
-        print("[KISStock] 데이터 수신(해외)")
+        Logger.log(f"통화: {currency}, 기준일: {today}")
         
         return self._fetch_balance(
             is_overseas=True,
@@ -84,7 +85,7 @@ class KISStock:
             )
 
             if data.get("rt_cd") != "0":
-                print(f"Error: {data.get('msg1')}")
+                Logger.log(f"Error: {data.get('msg1')}")
                 break
             # output1
             stocks = data.get("output1", [])

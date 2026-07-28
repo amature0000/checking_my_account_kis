@@ -1,7 +1,9 @@
 import requests
 from kis_auth import KISAuth
 import json
+from logger.Logger import Logger
 
+@Logger.apply_to_all_methods(Logger.printstack)
 class KISBalance:
     def __init__(self, auth: KISAuth):
         self.auth = auth
@@ -37,7 +39,6 @@ class KISBalance:
         
         data = self.fetch(api_url, tr_id, params)
         if data.get("rt_cd") == "0":
-            print(f"[KISBalance] 데이터 수신(국내)")
             res = data.get("output", {})
             return {
                 "cash_available": int(res.get("ord_psbl_cash", 0)),
@@ -58,7 +59,6 @@ class KISBalance:
         data = self.fetch(api_url, tr_id, params)
         
         if data.get("rt_cd") == "0":
-            print(f"[KISBalance] 데이터 수신(해외)")
             output = data.get("output", [])
             
             # 입력받은 통화(currency)와 일치하는 데이터 찾기

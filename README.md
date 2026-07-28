@@ -10,6 +10,7 @@ root/
   ├── private/              # API keys
   │     └── 내계좌1.json
   │     └── 내계좌2.json
+  │     ...
   ├── lib/                  # 라이브러리 코드
   ├── make.py               # 메인 실행 스크립트
   └── requirements.txt      # 요구 패키지
