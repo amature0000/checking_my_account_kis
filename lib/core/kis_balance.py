@@ -1,10 +1,8 @@
 import requests
 import json
 
-from lib.logger.logger import Logger
 from lib.core.kis_auth import KISAuth
 
-@Logger.apply_to_all_methods(Logger.printstack)
 class KISBalance:
     def __init__(self, auth: KISAuth):
         self.auth = auth
@@ -36,7 +34,6 @@ class KISBalance:
     def get_overseas_cash(self, currency: str = "USD"):
         api_url = "/uapi/overseas-stock/v1/trading/foreign-margin"
         tr_id = "TTTC2101R"
-        Logger.log(f"통화: {currency}")
         
         params = {
             "CANO": self.auth.cano,

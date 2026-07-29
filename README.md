@@ -31,7 +31,7 @@ python make.py
 ```
 lib/
   ├── core/...              # python-kis api를 활용하는 인터페이스
-  ├── logger/logger.py      # logger
+  ├── logger/logger.py      # deprecated
   └── visualizer/draw.py    # 시각화 데이터 출력
 ```
 
@@ -56,4 +56,3 @@ KISBalance 및 KISStock 클래스는 대상 계좌의 현금정보 및 주식정
 # note
 - lib/ 코드들은 kis 공식 샘플코드를 참고했습니다. [바로가기](https://github.com/koreainvestment/open-trading-api)
 - lib/ 코드들은 공식 라이브러리가 아닙니다.
-- Logger 클래스의 동기화 문제로 인해 싱글 스레드 환경만을 지원합니다.

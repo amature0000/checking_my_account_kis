@@ -4,10 +4,8 @@ import requests
 import json
 import datetime
 
-from lib.logger.logger import Logger
 from lib.core.kis_auth import KISAuth
 
-@Logger.apply_to_all_methods(Logger.printstack)
 class KISStock:
     def __init__(self, kis_auth: KISAuth):
         self.auth = kis_auth
@@ -43,7 +41,6 @@ class KISStock:
 
     def get_overseas(self, currency: str = "USD"):
         today = datetime.datetime.now().strftime("%Y%m%d")
-        Logger.log(f"통화: {currency}, 기준일: {today}")
         
         data = self._fetch_balance(
             is_overseas=True,
@@ -59,7 +56,7 @@ class KISStock:
                 "BASS_DT": today
             }
         )
-        if data.empty: return None, 1
+        if data.empty: return None, None
 
         # NOTE: 이름은 prdt_name인데 길어서 pdno로 바꿈
         result = data[["pdno", "cblc_qty13", "frcr_pchs_amt", "frcr_evlu_amt2"]].copy()
@@ -112,7 +109,7 @@ class KISStock:
             )
 
             if data.get("rt_cd") != "0":
-                Logger.log(f"Error: {data.get('msg1')}")
+                # Logger.log(f"Error: {data.get('msg1')}")
                 break
             # output1
             stocks = data.get("output1", [])
