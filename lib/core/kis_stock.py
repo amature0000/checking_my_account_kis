@@ -75,7 +75,7 @@ class KISStock:
         
         return result, exchange_rate
 
-    def fetch(self, api_url: str, tr_id: str, params: dict, post_flag: bool = False, tr_cont: str = ""):
+    def _fetch(self, api_url: str, tr_id: str, params: dict, post_flag: bool = False, tr_cont: str = ""):
         url = f"{self.auth.base_url}{api_url}"
         headers = self.auth.get_headers()
         
@@ -104,7 +104,7 @@ class KISStock:
 
         while True:
             # KISAuth.fetch
-            data, headers = self.fetch(
+            data, headers = self._fetch(
                 api_url=api_url, 
                 tr_id=tr_id, 
                 params=params, 

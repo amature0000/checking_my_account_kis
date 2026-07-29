@@ -8,21 +8,6 @@ from lib.core.kis_auth import KISAuth
 class KISBalance:
     def __init__(self, auth: KISAuth):
         self.auth = auth
-
-    def fetch(self, api_url: str, tr_id: str, params: dict, post_flag: bool = False):
-        url = f"{self.auth.base_url}{api_url}"
-        headers = self.auth.get_headers()
-        
-        headers.update({
-            "tr_id": tr_id
-        })
-
-        if post_flag:
-            res = requests.post(url, headers=headers, data=json.dumps(params))
-        else:
-            res = requests.get(url, headers=headers, params=params)
-
-        return res.json()
     
     def get_domestic_cash(self):
         api_url = "/uapi/domestic-stock/v1/trading/inquire-psbl-order"
@@ -38,7 +23,7 @@ class KISBalance:
             "OVRS_ICLD_YN": "N"
         }
         
-        data = self.fetch(api_url, tr_id, params)
+        data = self._fetch(api_url, tr_id, params)
         if data.get("rt_cd") == "0":
             res = data.get("output", {})
             return {
@@ -58,7 +43,7 @@ class KISBalance:
             "ACNT_PRDT_CD": self.auth.acnt_prdt_cd,
         }
         
-        data = self.fetch(api_url, tr_id, params)
+        data = self._fetch(api_url, tr_id, params)
         
         if data.get("rt_cd") == "0":
             output = data.get("output", [])
@@ -73,3 +58,18 @@ class KISBalance:
                     }
             
         return None
+
+    def _fetch(self, api_url: str, tr_id: str, params: dict, post_flag: bool = False):
+        url = f"{self.auth.base_url}{api_url}"
+        headers = self.auth.get_headers()
+        
+        headers.update({
+            "tr_id": tr_id
+        })
+
+        if post_flag:
+            res = requests.post(url, headers=headers, data=json.dumps(params))
+        else:
+            res = requests.get(url, headers=headers, params=params)
+
+        return res.json()
