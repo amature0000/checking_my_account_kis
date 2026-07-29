@@ -49,7 +49,7 @@ class Core:
         print(self.stock)
         print(self.balance)
 
-        draw_portfolio(self.stock, self.balance)
+        draw_portfolio(self.stock, self.balance, self.bass_exrt)
 
         
     def _getAuth(self, path):

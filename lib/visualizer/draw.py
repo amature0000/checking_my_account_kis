@@ -5,7 +5,7 @@ import os
 plt.rcParams["font.family"] = "Malgun Gothic"
 plt.rcParams["axes.unicode_minus"] = False
 
-def draw_portfolio(stock, balance):
+def draw_portfolio(stock, balance, exrt = None):
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(22, 12))
 
     # ==============================================================
@@ -84,9 +84,10 @@ def draw_portfolio(stock, balance):
     )
 
     cash_text = (
-        f"주문가능 현금 : {balance['cash_available']:,.0f}원\n"
-        f"출금가능 금액 : {balance['withdraw_available']:,.0f}원\n"
-        f"총 예수금 : {balance['total_cash']:,.0f}원"
+        f"환율 : {exrt} : 1 \n"
+        f"주문가능 현금 : {balance['cash_available']:,.0f}원 \n"
+        f"출금가능 금액 : {balance['withdraw_available']:,.0f}원 \n"
+        f"총 예수금 : {balance['total_cash']:,.0f}원 "
     )
 
     plt.figtext(
