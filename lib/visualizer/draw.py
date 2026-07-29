@@ -25,7 +25,7 @@ def draw_portfolio(stock, balance, exrt = None):
         valid = [(l, v) for l, v in zip(labels, values) if v > 0]
 
         labels2 = [
-            f"{label}\n{value/10000:,.0f}만원"
+            f"{label}\n{value/10000:,.2f}만원"
             for label, value in valid
         ]
 
