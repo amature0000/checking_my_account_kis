@@ -54,7 +54,7 @@ class Core:
         
     def _getAuth(self, path):
         try:
-            return KISAuth(path, self.key_path)
+            return KISAuth(path)
         except Exception as e:
             print(f"- {path} 로드 실패: {e}")
 

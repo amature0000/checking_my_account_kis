@@ -9,12 +9,14 @@ from lib.logger.logger import Logger
 
 @Logger.apply_to_all_methods(Logger.printstack)
 class KISAuth:
-    def __init__(self, key_path: str, base_path: str):
+    def __init__(self, key_path: str):
         """
         key_path: json 파일 경로
         """
         # 설정 로드
         self.name = os.path.basename(key_path)
+        base_path = os.path.dirname(os.path.abspath(key_path))
+        
         self.cfg = self._load_key(key_path)
 
         account = self.cfg['account'].split("-")
