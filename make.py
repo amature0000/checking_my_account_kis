@@ -26,6 +26,10 @@ class Core:
 
 
     def run(self):
+        if not self.kis_auths:
+            Logger.log("nothing to inspect, exit.")
+            return
+        
         all_stocks = []
         self.stock = []
         self.balance = {
