@@ -21,48 +21,44 @@ class Core:
     def __init__(self, key_path='./private', max_workers=8):
         self.key_path = key_path
         self.max_workers = max_workers
-        self.kis_auths = []
+        self.keys = []
+        self.bass_exrt = None
 
         for filename in os.listdir(key_path):
             if not filename.endswith('.json'):
                 continue
-
             file_path = os.path.join(key_path, filename)
-            auth = self._getAuth(file_path)
-
-            if auth: self.kis_auths.append(auth)
-
-        self.bass_exrt = None
+            self.keys.append(file_path)
 
     def run(self):
-        if not self.kis_auths:
+        if not self.keys:
             print('nothing to inspect, exit.')
             return
 
         self.stock = pd.DataFrame()
         self.balance = EMPTY_BALANCE
 
-        worker_count = min(self.max_workers, len(self.kis_auths))
+        worker_count = min(self.max_workers, len(self.keys))
         results = []
 
         with ThreadPoolExecutor(max_workers=worker_count) as executor:
-            future_to_auth = {
-                executor.submit(self._process, auth): auth
-                for auth in self.kis_auths
+            future_to_process = {
+                executor.submit(self._process, path): path
+                for path in self.keys
             }
 
-            for future in as_completed(future_to_auth):
-                auth = future_to_auth[future]
+            for future in as_completed(future_to_process):
                 try:
                     res = future.result()
                     if res: results.append(res)
                 except Exception as e:
-                    print(f'- {auth.name} 조회 실패: {e}')
+                    path = future_to_process[future]
+                    print(f'작업 중 오류: {os.path.basename(path)} 조회 실패: {e}')
 
         if not results:
             print('nothing to inspect, exit.')
             return
-
+        print("\n결과 합산...")
         # balance 합계
         for result in results:
             self.balance['cash_available'] += result['balance']['cash_available']
@@ -88,10 +84,11 @@ class Core:
 
         draw_portfolio(self.stock, self.balance, self.bass_exrt)
 
-    def _process(self, auth: KISAuth):
+    def _process(self, path: str):
+        auth = KISAuth(path)
         stock, bass_exrt = self._getStock(auth)
         balance = self._getBalance(auth, bass_exrt)
-        print(f'완료: {auth.name}')
+        print(f'작업 완료: {auth.name}')
 
         return {
             'name': auth.name,
@@ -99,13 +96,6 @@ class Core:
             'balance': balance,
             'bass_exrt': bass_exrt,
         }
-
-    def _getAuth(self, path):
-        try:
-            return KISAuth(path)
-        except Exception as e:
-            print(f'- {path} 로드 실패: {e}')
-            return None
 
     def _getStock(self, auth: KISAuth):
         stk = KISStock(auth)

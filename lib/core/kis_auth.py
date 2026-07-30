@@ -25,7 +25,7 @@ class KISAuth:
         if not os.path.exists(self.config_root):
             os.makedirs(self.config_root)
 
-        self.token_file = os.path.join(self.config_root, f"KIS_TOKEN_{self.__cano}_{datetime.today().strftime('%Y%m%d')}")
+        self.token_file = os.path.join(self.config_root, f"KIS_TOKEN_{self.__cano}")
         
         # 상태 변수
         self.base_url = "https://openapi.koreainvestment.com:9443"
@@ -73,7 +73,7 @@ class KISAuth:
             now_dt = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
 
             if exp_dt > now_dt:
-                print(f"{self.name}유효 토큰 확인, 만료일: {exp_dt}")
+                print(f"{self.name} 유효 토큰 확인, 만료일: {exp_dt}")
                 return tkg_tmp["token"]
             return None
         except Exception:
