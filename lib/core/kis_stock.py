@@ -109,7 +109,7 @@ class KISStock:
             )
 
             if data.get("rt_cd") != "0":
-                # Logger.log(f"Error: {data.get('msg1')}")
+                print(f"err: on {self.auth.name} stock, {data.get('msg1')}")
                 break
             # output1
             stocks = data.get("output1", [])
