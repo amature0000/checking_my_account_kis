@@ -20,16 +20,24 @@ def draw_portfolio(stock, balance, exrt = None):
     colors = plt.get_cmap("Pastel1").colors
 
     # ==============================================================
-    def draw_pie(ax, values, title, center_title):
+    def draw_pie(ax, values, title, center_title, base_value=None):
+        if base_value is None:
+            valid = [(l, v, None) for l, v in zip(labels, values)]
+        else:
+            valid = [(l, v, b) for l, v, b in zip(labels, values, base_value)]
 
-        valid = [(l, v) for l, v in zip(labels, values) if v > 0]
+        labels2 = []
+        for label, value, base in valid:
+            change_text = ""
+            if base:
+                change = (value - base) / base * 100
+                change_text = f"({change:.2f}%)"
 
-        labels2 = [
-            f"{label}\n{value/10000:,.2f}만원"
-            for label, value in valid
-        ]
+            labels2.append(
+                f"{label}\n{value/10000:,.2f}만원 {change_text}"
+            )
 
-        values2 = [v for _, v in valid]
+        values2 = [v for _, v, _ in valid]
 
         ax.pie(
             values2,
@@ -80,7 +88,8 @@ def draw_portfolio(stock, balance, exrt = None):
         ax2,
         current,
         "전체 포트폴리오 자산 가치",
-        f"총 평가액({profit_rate:.2f}%)\n{total_current:,.0f}원"
+        f"총 평가액({profit_rate:.2f}%)\n{total_current:,.0f}원",
+        invested
     )
 
     cash_text = (
